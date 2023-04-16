@@ -2,7 +2,7 @@
 ## Information
 Developers: DanX100, pokegustavo, Kell.EngBot  
 Mod Version: 1.0.4  
-Host/Client Requirements: Host and Clients needs to install  
+Host/Client Requirements: Host and all Clients needs to install  
 Tested on Game Version 1.2.03 and PML Version 0.11.1.25  
 
 ## Installation
