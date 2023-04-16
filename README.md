@@ -17,7 +17,7 @@ The mod adds 4 control modes for the pilot:
 3. Linear only. In this mode, the ship does not stop rotating, but the movement slows down.
 4. Disable. In this mode, all stabilizations are disabled and the ship behaves like a cosmic body.
 
-## Usage:
+## Usage
 1. Select the desired Flight Assist mode on the piloting panel
 2. Take control of the ship
 3. Enjoy!
