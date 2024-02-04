@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.5.33530.505
+VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealisticShipControls", "RealisticShipControls.csproj", "{7524506E-7C6E-4601-AD9B-BD84716BEB1F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealisticShipControls", "RealisticShipControls\RealisticShipControls.csproj", "{7524506E-7C6E-4601-AD9B-BD84716BEB1F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
