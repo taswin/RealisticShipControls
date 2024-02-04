@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using System.Collections.Generic;
+using HarmonyLib;
 using PulsarModLoader;
 using PulsarModLoader.MPModChecks;
 using UnityEngine;
@@ -10,7 +11,7 @@ namespace RealisticShipControls
     {
         static void Postfix(PLShipInfoBase __instance, ref float ___AngDragMultiplier, ref float ___DragMultiplier)
         {
-            if (__instance.ExteriorRigidbody != null && !__instance.InWarp && !__instance.FlightAIEnabled && __instance.DragMultiplier == 0f) 
+            if (__instance.ExteriorRigidbody != null && !__instance.InWarp && !__instance.FlightAIEnabled && ___DragMultiplier == 0f) 
                 __instance.ExteriorRigidbody.drag = 0;
 
             if (__instance.InWarp || __instance.FlightAIEnabled)
@@ -24,17 +25,17 @@ namespace RealisticShipControls
     [HarmonyPatch(typeof(PLUIPilotingScreen), "SetupUI")]
     class PilotingScreen_SetupUI
     {
-        static void Postfix(PLUIPilotingScreen __instance)
+        static void Postfix(PLUIPilotingScreen __instance, UISprite ___MyPanel)
         {
-            __instance.CreateLabel("Flight Assist", new Vector3(300f, -50f), 15, Color.white, __instance.MyPanel.transform, UIWidget.Pivot.TopLeft);
-            UISprite b1 = __instance.CreateButton("FlightAssistFull", "Full assist", new Vector3(280f, -90f), new Vector2(220f, 40f),
-                Color.white, __instance.MyPanel.transform, UIWidget.Pivot.TopLeft);
-            UISprite b2 = __instance.CreateButton("FlightAssistAngular", "Angular only", new Vector3(280f, -140f), new Vector2(220f, 40f),
-                Color.white, __instance.MyPanel.transform, UIWidget.Pivot.TopLeft);
-            UISprite b3 = __instance.CreateButton("FlightAssistLinear", "Linear only", new Vector3(280f, -190f), new Vector2(220f, 40f),
-                Color.white, __instance.MyPanel.transform, UIWidget.Pivot.TopLeft);
-            UISprite b4 = __instance.CreateButton("FlightAssistOff", "Disable", new Vector3(280f, -240f), new Vector2(220f, 40f),
-                Color.white, __instance.MyPanel.transform, UIWidget.Pivot.TopLeft);
+            Traverse.Create(__instance).Method("CreateLabel", "Flight Assist", new Vector3(300f, -50f), 15, Color.white, ___MyPanel.transform, UIWidget.Pivot.TopLeft);
+            UISprite b1 = Traverse.Create(__instance).Method("CreateButton", "FlightAssistFull", "Full assist", new Vector3(280f, -90f), new Vector2(220f, 40f),
+                Color.white, ___MyPanel.transform, UIWidget.Pivot.TopLeft).GetValue() as UISprite;
+            UISprite b2 = Traverse.Create(__instance).Method("CreateButton", "FlightAssistAngular", "Angular only", new Vector3(280f, -140f), new Vector2(220f, 40f),
+                Color.white, ___MyPanel.transform, UIWidget.Pivot.TopLeft).GetValue() as UISprite;
+            UISprite b3 = Traverse.Create(__instance).Method("CreateButton", "FlightAssistLinear", "Linear only", new Vector3(280f, -190f), new Vector2(220f, 40f),
+                Color.white, ___MyPanel.transform, UIWidget.Pivot.TopLeft).GetValue() as UISprite;
+            UISprite b4 = Traverse.Create(__instance).Method("CreateButton", "FlightAssistOff", "Disable", new Vector3(280f, -240f), new Vector2(220f, 40f),
+                Color.white, ___MyPanel.transform, UIWidget.Pivot.TopLeft).GetValue() as UISprite;
 
             __instance.OnButtonMouseAway(b1);
             __instance.OnButtonMouseAway(b2);
@@ -58,25 +59,31 @@ namespace RealisticShipControls
 
                 if (!PhotonNetwork.isMasterClient)
                 {
+                    float AngDragMultiplier = Traverse.Create(__instance.MyScreenHubBase.OptionalShipInfo).Field("AngDragMultiplier").GetValue<float>();
+                    float DragMultiplier = Traverse.Create(__instance.MyScreenHubBase.OptionalShipInfo).Field("DragMultiplier").GetValue<float>();
+
                     switch (inButton.name)
                     {
                         case "FlightAssistFull":
-                            __instance.MyScreenHubBase.OptionalShipInfo.AngDragMultiplier = 1.3f;
-                            __instance.MyScreenHubBase.OptionalShipInfo.DragMultiplier = 1f;
+                            AngDragMultiplier = 1.3f;
+                            DragMultiplier = 1f;
                             break;
                         case "FlightAssistAngular":
-                            __instance.MyScreenHubBase.OptionalShipInfo.AngDragMultiplier = 1.3f;
-                            __instance.MyScreenHubBase.OptionalShipInfo.DragMultiplier = 0f;
+                            AngDragMultiplier = 1.3f;
+                            DragMultiplier = 0f;
                             break;
                         case "FlightAssistLinear":
-                            __instance.MyScreenHubBase.OptionalShipInfo.AngDragMultiplier = 0f;
-                            __instance.MyScreenHubBase.OptionalShipInfo.DragMultiplier = 1f;
+                            AngDragMultiplier = 0f;
+                            DragMultiplier = 1f;
                             break;
                         case "FlightAssistOff":
-                            __instance.MyScreenHubBase.OptionalShipInfo.AngDragMultiplier = 0f;
-                            __instance.MyScreenHubBase.OptionalShipInfo.DragMultiplier = 0f;
+                            AngDragMultiplier = 0f;
+                            DragMultiplier = 0f;
                             break;
                     }
+
+                    Traverse.Create(__instance.MyScreenHubBase.OptionalShipInfo).Field("AngDragMultiplier").SetValue(AngDragMultiplier);
+                    Traverse.Create(__instance.MyScreenHubBase.OptionalShipInfo).Field("DragMultiplier").SetValue(DragMultiplier);
                 }
             }
         }
@@ -85,15 +92,17 @@ namespace RealisticShipControls
     [HarmonyPatch(typeof(PLUIPilotingScreen), "Update")]
     class PilotingScreen_Update
     {
-        static void Postfix(PLUIPilotingScreen __instance)
+        static void Postfix(PLUIPilotingScreen __instance, List<UIWidget> ___AllButtons)
         {
-            foreach (UIWidget widget in __instance.AllButtons)
+            foreach (UIWidget widget in ___AllButtons)
             {
+                float AngDragMultiplier = Traverse.Create(__instance.MyScreenHubBase.OptionalShipInfo).Field("AngDragMultiplier").GetValue<float>();
+                float DragMultiplier = Traverse.Create(__instance.MyScreenHubBase.OptionalShipInfo).Field("DragMultiplier").GetValue<float>();
                 switch (widget.name)
                 {
                     case "FlightAssistFull":
-                        if (__instance.MyScreenHubBase.OptionalShipInfo.AngDragMultiplier == 1.3f &&
-                            __instance.MyScreenHubBase.OptionalShipInfo.DragMultiplier == 1f)
+                        if (AngDragMultiplier == 1.3f &&
+                            DragMultiplier == 1f)
                         {
                             widget.alpha = 1f;
                             widget.color = Color.white;
@@ -103,8 +112,8 @@ namespace RealisticShipControls
                         }
                         break;
                     case "FlightAssistAngular":
-                        if (__instance.MyScreenHubBase.OptionalShipInfo.AngDragMultiplier == 1.3f &&
-                            __instance.MyScreenHubBase.OptionalShipInfo.DragMultiplier == 0f)
+                        if (AngDragMultiplier == 1.3f &&
+                            DragMultiplier == 0f)
                         {
                             widget.alpha = 1f;
                             widget.color = Color.white;
@@ -115,8 +124,8 @@ namespace RealisticShipControls
                         }
                         break;
                     case "FlightAssistLinear":
-                        if (__instance.MyScreenHubBase.OptionalShipInfo.AngDragMultiplier == 0f &&
-                            __instance.MyScreenHubBase.OptionalShipInfo.DragMultiplier == 1f)
+                        if (AngDragMultiplier == 0f &&
+                            DragMultiplier == 1f)
                         {
                             widget.alpha = 1f;
                             widget.color = Color.white;
@@ -127,8 +136,8 @@ namespace RealisticShipControls
                         }
                         break;
                     case "FlightAssistOff":
-                        if (__instance.MyScreenHubBase.OptionalShipInfo.AngDragMultiplier == 0f &&
-                            __instance.MyScreenHubBase.OptionalShipInfo.DragMultiplier == 0f)
+                        if (AngDragMultiplier == 0f &&
+                            DragMultiplier == 0f)
                         {
                             widget.alpha = 1f;
                             widget.color = Color.white;
@@ -152,30 +161,36 @@ namespace RealisticShipControls
             PLShipInfoBase shipFromID = PLEncounterManager.Instance.GetShipFromID((int)arguments[1]);
             if (shipFromID != null)
             {
+                float AngDragMultiplier = Traverse.Create(shipFromID).Field("AngDragMultiplier").GetValue<float>();
+                float DragMultiplier = Traverse.Create(shipFromID).Field("DragMultiplier").GetValue<float>();
+
                 string msg = "[PL] has set the Flight Assist to ";
                 switch (buttonPressed)
                 {
                     case "FlightAssistFull":
-                        shipFromID.AngDragMultiplier = 1.3f;
-                        shipFromID.DragMultiplier = 1f;
+                        AngDragMultiplier = 1.3f;
+                        DragMultiplier = 1f;
                         msg += "full";
                         break;
                     case "FlightAssistAngular":
-                        shipFromID.AngDragMultiplier = 1.3f;
-                        shipFromID.DragMultiplier = 0f;
+                        AngDragMultiplier = 1.3f;
+                        DragMultiplier = 0f;
                         msg += "angular";
                         break;
                     case "FlightAssistLinear":
-                        shipFromID.AngDragMultiplier = 0f;
-                        shipFromID.DragMultiplier = 1f;
+                        AngDragMultiplier = 0f;
+                        DragMultiplier = 1f;
                         msg += "linear";
                         break;
                     case "FlightAssistOff":
-                        shipFromID.AngDragMultiplier = 0f;
-                        shipFromID.DragMultiplier = 0f;
+                        AngDragMultiplier = 0f;
+                        DragMultiplier = 0f;
                         msg += "disable";
                         break;
                 }
+
+                Traverse.Create(shipFromID).Field("AngDragMultiplier").SetValue(AngDragMultiplier);
+                Traverse.Create(shipFromID).Field("DragMultiplier").SetValue(DragMultiplier);
 
                 PLPlayer playerForPhotonPlayer = PLServer.GetPlayerForPhotonPlayer(sender.sender);
                 if (playerForPhotonPlayer != null && playerForPhotonPlayer.TeamID == 0 && !playerForPhotonPlayer.IsBot)
