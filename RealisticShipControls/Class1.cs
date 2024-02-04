@@ -244,6 +244,16 @@ namespace RealisticShipControls
 
                     Messaging.Notification($"FA Toggled {(Test.faToggle ? "On" : "Off")}");
                 }
+
+                bool faHold = (bool) Traverse.Create(PLInput.Instance).Method("GetButtonDown", "fahold").GetValue();
+                if (faHold || (bool)Traverse.Create(PLInput.Instance).Method("GetButtonUp", "fahold").GetValue())
+                {
+                    Test.faToggle = !Test.faToggle;
+
+                    Test.UpdateFAMode(currentShip, Test.GetMode());
+
+                    Messaging.Notification($"FA Hold {(faHold ? "Held" : "Released")} (FA {(Test.faToggle ? "On" : "Off")})");
+                }
             }
         }
     }
@@ -264,6 +274,7 @@ class Mod : PulsarMod, IKeybind
     public void RegisterBinds(KeybindManager manager)
     {
         manager.NewBind("FAToggle", "fatoggle", "Piloting", "o");
+        manager.NewBind("FAHold", "fahold", "Piloting", "l");
     }
 
     public override string Version => "1.0.4";
